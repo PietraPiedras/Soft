@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Pietra · Ferias</title>
+<style>
+:root{--bg:#0b0b0c;--surface:#161618;--line:#2a2a2d;--text:#f4f4f2;--muted:#a0a0a6;--accent:#d9b36c;--ok:#4caf7a;--bad:#e5645a;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px}
+h1{font-size:1.05rem;margin:0}
+.fair{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:.9rem;color:var(--muted)}
+.fair b{color:var(--text)}
+main{max-width:900px;margin:auto;padding:12px 14px}
+button{font:inherit;color:var(--text);cursor:pointer}
+.btn{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 14px}
+.btn.pri{background:var(--accent);color:#141414;border:0;font-weight:700}
+.btn.bad{color:var(--bad)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px}
+.chip{flex:none;border:1px solid var(--line);background:none;border-radius:999px;padding:7px 14px;color:var(--muted);font-size:.9rem}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.pay .chip.on{background:var(--accent);border-color:var(--accent);color:#141414;font-weight:700}
+input[type=search],input[type=text],input[type=date],input[type=number],select{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text);font:inherit;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.tile{position:relative;border:1px solid var(--line);border-radius:12px;padding:0;overflow:hidden;background:var(--surface);text-align:left;min-height:96px;display:flex;flex-direction:column}
+.tile .sw{height:34px}
+.tile .tx{padding:8px 10px}
+.tile b{display:block;font-size:.92rem}
+.tile small{color:var(--muted)}
+.tile .pr{color:var(--accent);font-weight:700;margin-top:2px;display:block}
+.tile .bd{position:absolute;top:6px;right:6px;background:var(--ok);color:#06210f;border-radius:999px;font-size:.75rem;font-weight:700;padding:1px 8px}
+.tile:active{transform:scale(.97)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 8px;font-size:1rem}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.kpi b{display:block;font-size:1.25rem;color:var(--accent)}
+.kpi span{font-size:.78rem;color:var(--muted)}
+.row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:.93rem}
+.row:last-child{border-bottom:0}
+.row .r{color:var(--muted);white-space:nowrap}
+.muted{color:var(--muted);font-size:.88rem}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{background:none;border:0;padding:12px 4px;color:var(--muted);font-size:.85rem}
+nav button.on{color:var(--accent);font-weight:700}
+#toast{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:9;background:#22262b;border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:none;align-items:center;justify-content:space-between;gap:10px}
+#toast.show{display:flex}
+.hide{display:none}
+.line{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.line .t{flex:1}
+.line button{border:1px solid var(--line);background:none;border-radius:8px;padding:4px 9px;font-size:.8rem}
+.sw2{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Pietra · Control de ferias</h1>
+  <div class="fair"><span>Feria:</span><b id="fairName">—</b><button class="btn" style="padding:4px 10px;margin-left:auto" onclick="newFair()">Cambiar / nueva</button></div>
+</header>
+<main>
+  <!-- VENDER -->
+  <section id="v-vender">
+    <div class="chips pay" id="pay"></div>
+    <input type="search" id="q" placeholder="Buscar piedra o pieza…" oninput="draw()">
+    <div class="chips" id="cats"></div>
+    <div class="chips" id="sizes"></div>
+    <div class="grid" id="grid"></div>
+    <div style="margin-top:12px"><button class="btn" onclick="otro()">+ Otro artículo (precio libre)</button></div>
+  </section>
+  <!-- RESUMEN -->
+  <section id="v-resumen" class="hide">
+    <input type="date" id="rdate" onchange="resumen()">
+    <select id="rfair" onchange="resumen()"></select>
+    <div id="rbody"></div>
+  </section>
+  <!-- CARTONES -->
+  <section id="v-cartones" class="hide">
+    <div class="card"><h3>Cartones a reimprimir</h3><p class="muted">Cuenta cada pieza vendida que lleva cartón, desde la última vez que marcaste que reimprimiste.</p><div id="cartList"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn pri" onclick="copiarCartones()">Copiar lista</button><button class="btn" onclick="marcarTodo()">Ya reimprimí todo</button></div></div>
+  </section>
+  <!-- DATOS -->
+  <section id="v-datos" class="hide">
+    <div class="card"><h3>Qué lleva cartón</h3><p class="muted">Tildá los tipos de pieza que llevan cartón. Cada piedra tiene su propio cartón; los aros usan uno general.</p><div id="cardCats"></div></div>
+    <div class="card"><h3>Ferias</h3><div id="fairList"></div></div>
+    <div class="card"><h3>Copia de seguridad</h3><p class="muted">Los datos quedan guardados solo en este celular. Descargá una copia de vez en cuando.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" onclick="bajarCSV()">Descargar ventas (Excel/CSV)</button><button class="btn" onclick="bajarBackup()">Descargar copia</button><button class="btn" onclick="document.getElementById('file').click()">Restaurar copia</button></div>
+      <input type="file" id="file" accept=".json" class="hide" onchange="restaurar(this)">
+    </div>
+    <div class="card"><h3>Borrar todo</h3><button class="btn bad" onclick="borrarTodo()">Borrar todos los datos</button></div>
+  </section>
+</main>
+<div id="toast"><span id="toastTx"></span><button class="btn" id="toastBtn" onclick="deshacer()">Deshacer</button></div>
+<nav>
+  <button id="n-vender" class="on" onclick="tab('vender')">Vender</button>
+  <button id="n-resumen" onclick="tab('resumen')">Resumen</button>
+  <button id="n-cartones" onclick="tab('cartones')">Cartones</button>
+  <button id="n-datos" onclick="tab('datos')">Datos</button>
+</nav>
+<script>
+var DATA={"items":[["Lapislázuli","Dijes","Grande",12000,"#2c4aa8","#101a45"],["Laja de ágata","Dijes","Facetada / Especial",15000,"#8a6a55","#2e2018"],["Pirita pulida","Dijes","Facetada / Especial",15000,"#a89a55","#2c2810"],["Ágata Bandeada","Dijes","Pequeña",8000,"#ab755a","#32180c"],["Ágata Bandeada","Dijes","Mediana",10000,"#ab755a","#32180c"],["Ágata Bandeada","Dijes","Grande",12000,"#ab755a","#32180c"],["Ágata Blanca","Dijes","Pequeña",8000,"#79848c","#1a2023"],["Ágata Blanca","Dijes","Mediana",10000,"#79848c","#1a2023"],["Ágata Blanca","Dijes","Grande",12000,"#79848c","#1a2023"],["Ágata Gris","Dijes","Pequeña",8000,"#828282","#1f1f1f"],["Ágata Gris","Dijes","Mediana",10000,"#828282","#1f1f1f"],["Ágata Gris","Dijes","Grande",12000,"#828282","#1f1f1f"],["Ágata Verde","Dijes","Pequeña",8000,"#68b84d","#123806"],["Ágata Verde","Dijes","Mediana",10000,"#68b84d","#123806"],["Ágata Verde","Dijes","Grande",12000,"#68b84d","#123806"],["Amatista","Dijes","Pequeña",8000,"#7b59ec","#1c0b50"],["Amatista","Dijes","Mediana",10000,"#7b59ec","#1c0b50"],["Amatista","Dijes","Grande",12000,"#7b59ec","#1c0b50"],["Amazonita","Dijes","Pequeña",8000,"#70e2a9","#164b31"],["Amazonita","Dijes","Mediana",10000,"#70e2a9","#164b31"],["Amazonita","Dijes","Grande",12000,"#70e2a9","#164b31"],["Aventurina","Dijes","Pequeña",8000,"#63ba55","#10390a"],["Aventurina","Dijes","Mediana",10000,"#63ba55","#10390a"],["Aventurina","Dijes","Grande",12000,"#63ba55","#10390a"],["Aventurina Café","Dijes","Pequeña",8000,"#896454","#221109"],["Aventurina Café","Dijes","Mediana",10000,"#896454","#221109"],["Aventurina Café","Dijes","Grande",12000,"#896454","#221109"],["Calcita","Dijes","Pequeña",8000,"#d8a357","#472e0a"],["Calcita","Dijes","Mediana",10000,"#d8a357","#472e0a"],["Calcita","Dijes","Grande",12000,"#d8a357","#472e0a"],["Celestina","Dijes","Pequeña",8000,"#63b5f5","#103654"],["Celestina","Dijes","Mediana",10000,"#63b5f5","#103654"],["Celestina","Dijes","Grande",12000,"#63b5f5","#103654"],["Cianita","Dijes","Pequeña",8000,"#6aa4b2","#132e35"],["Cianita","Dijes","Mediana",10000,"#6aa4b2","#132e35"],["Cianita","Dijes","Grande",12000,"#6aa4b2","#132e35"],["Cianita Azul","Dijes","Pequeña",8000,"#598dec","#0b2450"],["Cianita Azul","Dijes","Mediana",10000,"#598dec","#0b2450"],["Cianita Azul","Dijes","Grande",12000,"#598dec","#0b2450"],["Citrino","Dijes","Pequeña",8000,"#c5823f","#3e1f00"],["Citrino","Dijes","Mediana",10000,"#c5823f","#3e1f00"],["Citrino","Dijes","Grande",12000,"#c5823f","#3e1f00"],["Cornalina","Dijes","Pequeña",8000,"#d8663f","#471100"],["Cornalina","Dijes","Mediana",10000,"#d8663f","#471100"],["Cornalina","Dijes","Grande",12000,"#d8663f","#471100"],["Cuarzo","Dijes","Pequeña",8000,"#619dc5","#0f2b3e"],["Cuarzo","Dijes","Mediana",10000,"#619dc5","#0f2b3e"],["Cuarzo","Dijes","Grande",12000,"#619dc5","#0f2b3e"],["Cuarzo Ahumado","Dijes","Pequeña",8000,"#75695e","#18130e"],["Cuarzo Ahumado","Dijes","Mediana",10000,"#75695e","#18130e"],["Cuarzo Ahumado","Dijes","Grande",12000,"#75695e","#18130e"],["Cuarzo Cherry","Dijes","Pequeña",8000,"#d85784","#470a20"],["Cuarzo Cherry","Dijes","Mediana",10000,"#d85784","#470a20"],["Cuarzo Cherry","Dijes","Grande",12000,"#d85784","#470a20"],["Cuarzo Rojo","Dijes","Pequeña",8000,"#ff3f3f","#590000"],["Cuarzo Rojo","Dijes","Mediana",10000,"#ff3f3f","#590000"],["Cuarzo Rojo","Dijes","Grande",12000,"#ff3f3f","#590000"],["Cuarzo Rosa","Dijes","Pequeña",8000,"#f57fd1","#541d43"],["Cuarzo Rosa","Dijes","Mediana",10000,"#f57fd1","#541d43"],["Cuarzo Rosa","Dijes","Grande",12000,"#f57fd1","#541d43"],["Cuarzo Salmón","Dijes","Pequeña",8000,"#ec8473","#502018"],["Cuarzo Salmón","Dijes","Mediana",10000,"#ec8473","#502018"],["Cuarzo Salmón","Dijes","Grande",12000,"#ec8473","#502018"],["Cuarzo Verde","Dijes","Pequeña",8000,"#6ac04e","#133c06"],["Cuarzo Verde","Dijes","Mediana",10000,"#6ac04e","#133c06"],["Cuarzo Verde","Dijes","Grande",12000,"#6ac04e","#133c06"],["Diamantina","Dijes","Pequeña",8000,"#7e8c9f","#1d232c"],["Diamantina","Dijes","Mediana",10000,"#7e8c9f","#1d232c"],["Diamantina","Dijes","Grande",12000,"#7e8c9f","#1d232c"],["Fluorita Verde","Dijes","Pequeña",8000,"#5ab84d","#0c3806"],["Fluorita Verde","Dijes","Mediana",10000,"#5ab84d","#0c3806"],["Fluorita Verde","Dijes","Grande",12000,"#5ab84d","#0c3806"],["Fucsita","Dijes","Pequeña",8000,"#6ba952","#143108"],["Fucsita","Dijes","Mediana",10000,"#6ba952","#143108"],["Fucsita","Dijes","Grande",12000,"#6ba952","#143108"],["Hematita","Dijes","Pequeña",8000,"#595c5c","#0b0d0d"],["Hematita","Dijes","Mediana",10000,"#595c5c","#0b0d0d"],["Hematita","Dijes","Grande",12000,"#595c5c","#0b0d0d"],["Howlita","Dijes","Pequeña",8000,"#7b7f82","#1c1d1f"],["Howlita","Dijes","Mediana",10000,"#7b7f82","#1c1d1f"],["Howlita","Dijes","Grande",12000,"#7b7f82","#1c1d1f"],["Jaspe Paisaje","Dijes","Pequeña",8000,"#7e7e57","#1d1d0a"],["Jaspe Paisaje","Dijes","Mediana",10000,"#7e7e57","#1d1d0a"],["Jaspe Paisaje","Dijes","Grande",12000,"#7e7e57","#1d1d0a"],["Labradorita","Dijes","Pequeña",8000,"#5784b2","#0a2035"],["Labradorita","Dijes","Mediana",10000,"#5784b2","#0a2035"],["Labradorita","Dijes","Grande",12000,"#5784b2","#0a2035"],["Lapislázuli","Dijes","Pequeña",8000,"#3f5ed8","#000e47"],["Lapislázuli","Dijes","Mediana",10000,"#3f5ed8","#000e47"],["Lluvia de Estrellas","Dijes","Pequeña",8000,"#545ac5","#090c3e"],["Lluvia de Estrellas","Dijes","Mediana",10000,"#545ac5","#090c3e"],["Lluvia de Estrellas","Dijes","Grande",12000,"#545ac5","#090c3e"],["Malaquita","Dijes","Pequeña",8000,"#529c4c","#082b05"],["Malaquita","Dijes","Mediana",10000,"#529c4c","#082b05"],["Malaquita","Dijes","Grande",12000,"#529c4c","#082b05"],["Matriz de Amatista","Dijes","Pequeña",8000,"#7858e2","#1a0b4b"],["Matriz de Amatista","Dijes","Mediana",10000,"#7858e2","#1a0b4b"],["Matriz de Amatista","Dijes","Grande",12000,"#7858e2","#1a0b4b"],["Obsidiana","Dijes","Pequeña",8000,"#4f525c","#07080d"],["Obsidiana","Dijes","Mediana",10000,"#4f525c","#07080d"],["Obsidiana","Dijes","Grande",12000,"#4f525c","#07080d"],["Ojo de Buey","Dijes","Pequeña",8000,"#8c5c49","#230d04"],["Ojo de Buey","Dijes","Mediana",10000,"#8c5c49","#230d04"],["Ojo de Buey","Dijes","Grande",12000,"#8c5c49","#230d04"],["Ojo de Tigre","Dijes","Pequeña",8000,"#a17345","#2d1802"],["Ojo de Tigre","Dijes","Mediana",10000,"#a17345","#2d1802"],["Ojo de Tigre","Dijes","Grande",12000,"#a17345","#2d1802"],["Ónix Cielo","Dijes","Pequeña",8000,"#76c8f5","#193f54"],["Ónix Cielo","Dijes","Mediana",10000,"#76c8f5","#193f54"],["Ónix Cielo","Dijes","Grande",12000,"#76c8f5","#193f54"],["Ónix Inca","Dijes","Pequeña",8000,"#c17d66","#3c1c11"],["Ónix Inca","Dijes","Mediana",10000,"#c17d66","#3c1c11"],["Ónix Inca","Dijes","Grande",12000,"#c17d66","#3c1c11"],["Ónix Rojo","Dijes","Pequeña",8000,"#af454c","#340205"],["Ónix Rojo","Dijes","Mediana",10000,"#af454c","#340205"],["Ónix Rojo","Dijes","Grande",12000,"#af454c","#340205"],["Opalina","Dijes","Pequeña",8000,"#8e9ccf","#242b42"],["Opalina","Dijes","Mediana",10000,"#8e9ccf","#242b42"],["Opalina","Dijes","Grande",12000,"#8e9ccf","#242b42"],["Piedra de la Luna","Dijes","Pequeña",8000,"#738096","#181e28"],["Piedra de la Luna","Dijes","Mediana",10000,"#738096","#181e28"],["Piedra de la Luna","Dijes","Grande",12000,"#738096","#181e28"],["Pirita","Dijes","Pequeña",8000,"#a8793f","#311a00"],["Pirita","Dijes","Mediana",10000,"#a8793f","#311a00"],["Pirita","Dijes","Grande",12000,"#a8793f","#311a00"],["Rodocrosita","Dijes","Pequeña",8000,"#ec6a96","#501328"],["Rodocrosita","Dijes","Mediana",10000,"#ec6a96","#501328"],["Rodocrosita","Dijes","Grande",12000,"#ec6a96","#501328"],["Rosa del Desierto","Dijes","Pequeña",8000,"#a3846b","#2e1f14"],["Rosa del Desierto","Dijes","Mediana",10000,"#a3846b","#2e1f14"],["Rosa del Desierto","Dijes","Grande",12000,"#a3846b","#2e1f14"],["Selenita","Dijes","Pequeña",8000,"#79848c","#1a2023"],["Selenita","Dijes","Mediana",10000,"#79848c","#1a2023"],["Selenita","Dijes","Grande",12000,"#79848c","#1a2023"],["Selenita Melocotón","Dijes","Pequeña",8000,"#e28168","#4b1e12"],["Selenita Melocotón","Dijes","Mediana",10000,"#e28168","#4b1e12"],["Selenita Melocotón","Dijes","Grande",12000,"#e28168","#4b1e12"],["Selenita Miel","Dijes","Pequeña",8000,"#c5893f","#3e2200"],["Selenita Miel","Dijes","Mediana",10000,"#c5893f","#3e2200"],["Selenita Miel","Dijes","Grande",12000,"#c5893f","#3e2200"],["Sodalita","Dijes","Pequeña",8000,"#3f63cf","#001042"],["Sodalita","Dijes","Mediana",10000,"#3f63cf","#001042"],["Sodalita","Dijes","Grande",12000,"#3f63cf","#001042"],["Super 7","Dijes","Pequeña",8000,"#7d5ed8","#1c0e47"],["Super 7","Dijes","Mediana",10000,"#7d5ed8","#1c0e47"],["Super 7","Dijes","Grande",12000,"#7d5ed8","#1c0e47"],["Trinita","Dijes","Pequeña",8000,"#68a461","#122e0f"],["Trinita","Dijes","Mediana",10000,"#68a461","#122e0f"],["Trinita","Dijes","Grande",12000,"#68a461","#122e0f"],["Turmalina Negra","Dijes","Pequeña",8000,"#666666","#111111"],["Turmalina Negra","Dijes","Mediana",10000,"#666666","#111111"],["Turmalina Negra","Dijes","Grande",12000,"#666666","#111111"],["Turmalina Sandía","Dijes","Pequeña",8000,"#db6a9e","#48132c"],["Turmalina Sandía","Dijes","Mediana",10000,"#db6a9e","#48132c"],["Turmalina Sandía","Dijes","Grande",12000,"#db6a9e","#48132c"],["Turquesa","Dijes","Pequeña",8000,"#59dba7","#0b4830"],["Turquesa","Dijes","Mediana",10000,"#59dba7","#0b4830"],["Turquesa","Dijes","Grande",12000,"#59dba7","#0b4830"],["Unakita","Dijes","Pequeña",8000,"#908268","#251f12"],["Unakita","Dijes","Mediana",10000,"#908268","#251f12"],["Unakita","Dijes","Grande",12000,"#908268","#251f12"],["Zoisita","Dijes","Pequeña",8000,"#68b14d","#123506"],["Zoisita","Dijes","Mediana",10000,"#68b14d","#123506"],["Zoisita","Dijes","Grande",12000,"#68b14d","#123506"],["Cuarzo Rosa","Dijes","Perla",7000,"#f57fd1","#541d43"],["Cuarzo Cherry","Dijes","Perla",7000,"#d85784","#470a20"],["Ojo de Tigre","Dijes","Perla",7000,"#a17345","#2d1802"],["Ojo de Buey","Dijes","Perla",7000,"#8c5c49","#230d04"],["Jaspe Rojo","Dijes","Perla",7000,"#bd7260","#3a170f"],["Ojo de Halcón","Dijes","Perla",7000,"#8793a4","#21262e"],["Opalina","Dijes","Perla",7000,"#8e9ccf","#242b42"],["Ónix Negro","Dijes","Perla",7000,"#6b6b6f","#141416"],["Ágata Naranja","Dijes","Perla",7000,"#e79b62","#4e2a10"],["Malaquita","Dijes","Perla",7000,"#529c4c","#082b05"],["Amatista","Dijes","Perla",7000,"#7b59ec","#1c0b50"],["Lapislázuli","Dijes","Cordón",4000,"#3f5ed8","#000e47"],["Sodalita","Dijes","Cordón",4000,"#3f63cf","#001042"],["Hematita","Dijes","Cordón",4000,"#595c5c","#0b0d0d"],["Ágata Naranja","Dijes","Cordón",4000,"#e79b62","#4e2a10"],["Ágata Cebra","Dijes","Cordón",4000,"#bdb7ae","#3a3733"],["Lluvia de Estrellas","Dijes","Cordón",4000,"#545ac5","#090c3e"],["Amatista","Dijes","Cordón",4000,"#7b59ec","#1c0b50"],["Howlita","Dijes","Cordón",4000,"#7b7f82","#1c1d1f"],["Turquesa","Dijes","Cordón",4000,"#59dba7","#0b4830"],["Turmalina Negra","Piedras","Suelta",15000,"#666666","#111111"],["Cuarzo Cristal","Piedras","Suelta",15000,"#619dc5","#0f2b3e"],["Cuarzo Verde","Piedras","Suelta",15000,"#6ac04e","#133c06"],["Selenita","Piedras","Suelta",15000,"#79848c","#1a2023"],["Fluorita Verde","Piedras","Suelta",15000,"#5ab84d","#0c3806"],["Fucsita","Luna","Luna de acero",15000,"#6ba952","#143108"],["Lapislázuli","Luna","Luna de acero",15000,"#3f5ed8","#000e47"],["Rodocrosita","Luna","Luna de acero",15000,"#ec6a96","#501328"],["Turmalina Negra","Luna","Luna de acero",15000,"#666666","#111111"],["Cuarzo Cherry","Luna","Luna de acero",15000,"#d85784","#470a20"],["Opalina","Luna","Luna de acero",15000,"#8e9ccf","#242b42"],["Ónix Negro","Luna","Luna de acero",15000,"#6b6b6f","#141416"],["Malaquita","Luna","Luna de acero",15000,"#529c4c","#082b05"],["Pirita","Luna","Luna de acero",15000,"#a8793f","#311a00"],["Virgen rezando con rosario","Cadenas con dijes","Acero",7000,"#9a9aa4","#2a2a30"],["Colibrí","Cadenas con dijes","Acero",7000,"#9a9aa4","#2a2a30"],["Margarita","Cadenas con dijes","Acero",7000,"#9a9aa4","#2a2a30"],["Torre Eiffel","Cadenas con dijes","Acero",7000,"#9a9aa4","#2a2a30"],["Serpiente","Cadenas con dijes","Acero",7000,"#9a9aa4","#2a2a30"],["Herradura","Cadenas con dijes","Acero",7000,"#9a9aa4","#2a2a30"],["Astronauta en la luna","Cadenas con dijes","Acero",7000,"#9a9aa4","#2a2a30"],["Valija","Cadenas con dijes","Acero",7000,"#9a9aa4","#2a2a30"],["Luna con estrella","Cadenas con dijes","Acero",7000,"#9a9aa4","#2a2a30"],["Mariposa","Cadenas con dijes","Acero",7000,"#9a9aa4","#2a2a30"],["Malaquita","Aros","Con perla",10000,"#529c4c","#082b05"],["Jaspe Rojo","Aros","Con perla",10000,"#bd7260","#3a170f"],["Amatista","Aros","Con perla",10000,"#7b59ec","#1c0b50"],["Lapislázuli","Anillos","Con piedra",5000,"#3f5ed8","#000e47"],["Amatista","Anillos","Con piedra",5000,"#7b59ec","#1c0b50"],["Cuarzo Cristal","Anillos","Con piedra",5000,"#619dc5","#0f2b3e"],["Cuarzo Rosa","Anillos","Con piedra",5000,"#f57fd1","#541d43"],["Obsidiana","Anillos","Con piedra",5000,"#4f525c","#07080d"],["Cuarzo Verde","Anillos","Con piedra",5000,"#6ac04e","#133c06"],["Rodocrosita","Anillos","Con piedra",5000,"#ec6a96","#501328"],["Zoisita","Anillos","Con piedra",5000,"#68b14d","#123506"],["Mix de piedras","Anillos","Con piedra",5000,"#a5a5a5","#2f2f2f"],["Aries · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Aries · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Tauro · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Tauro · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Géminis · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Géminis · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Cáncer · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Cáncer · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Leo · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Leo · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Virgo · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Virgo · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Libra · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Libra · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Escorpio · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Escorpio · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Sagitario · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Sagitario · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Capricornio · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Capricornio · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Acuario · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Acuario · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Piscis · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Piscis · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Corazón · Alpaca","Anillos","Estampados",5000,"#c4c8d0","#2c2e33"],["Corazón · Bronce","Anillos","Estampados",5000,"#d4ac52","#3a2c0c"],["Liso · Alpaca","Anillos","Lisos",4000,"#c4c8d0","#2c2e33"],["Liso · Bronce","Anillos","Lisos",4000,"#d4ac52","#3a2c0c"],["Alambre de bronce simple","Anillos","De alambre",3000,"#d4ac52","#3a2c0c"],["Alambre de bronce triple","Anillos","De alambre",3000,"#d4ac52","#3a2c0c"],["Corazón de acero quirúrgico","Anillos","De alambre",3000,"#c4c8d0","#2c2e33"],["Corazón de bronce","Anillos","De alambre",3000,"#d4ac52","#3a2c0c"],["Onda de bronce","Anillos","De alambre",3000,"#d4ac52","#3a2c0c"]],"labels":{"Dijes":"Cadenas con Piedra","Luna":"Cadena de Luna con Piedra"},"cats":["Dijes","Luna","Pulseras","Anillos","Aros","Cadenas con dijes","Piedras"]};
+var ITEMS=DATA.items.map(function(a,i){return {k:a[1]+"|"+a[0]+"|"+a[2],n:a[0],c:a[1],s:a[2],p:a[3],g0:a[4],g1:a[5]};});
+var LAB=DATA.labels,CATS=DATA.cats.filter(function(c){return ITEMS.some(function(x){return x.c===c;});});
+var PAYS=["Efectivo","Transferencia","QR","Tarjeta"];
+var KEY="pietra_ferias_v1";
+var S={fairs:[],sales:[],printed:{},cardCats:{"Dijes":true,"Luna":true,"Aros":true,"Piedras":true,"Anillos":false,"Cadenas con dijes":false,"Pulseras":false},fair:null,pay:"Efectivo"};
+var cat="Dijes",size="Todos",lastSale=null;
+function load(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);for(var k in o)S[k]=o[k];}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast("No pude guardar: revisá el almacenamiento del navegador",true);}}
+function today(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
+function dayOf(t){var d=new Date(t);return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
+function money(n){return "$"+Math.round(n).toLocaleString("es-AR");}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function lab(c){return LAB[c]||c;}
+function norm(s){return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
+function fairObj(id){for(var i=0;i<S.fairs.length;i++)if(S.fairs[i].id===id)return S.fairs[i];return null;}
+function ensureFair(){if(!S.fair||!fairObj(S.fair)){newFair(true);}document.getElementById("fairName").textContent=(fairObj(S.fair)||{name:"—"}).name;}
+function newFair(first){
+  var name=prompt(first?"Nombre de la feria de hoy (ej: Feria de San Telmo)":"Nombre de la feria (o escribí el de una ya cargada para volver a ella)",first?"":"");
+  if(name===null||!name.trim()){if(first&&!S.fairs.length){name="Feria sin nombre";}else return;}
+  name=name.trim();var f=null;
+  for(var i=0;i<S.fairs.length;i++)if(norm(S.fairs[i].name)===norm(name)&&S.fairs[i].date===today())f=S.fairs[i];
+  if(!f){f={id:"f"+Date.now(),name:name,date:today()};S.fairs.push(f);}
+  S.fair=f.id;save();document.getElementById("fairName").textContent=f.name;draw();
+}
+function tab(t){["vender","resumen","cartones","datos"].forEach(function(x){document.getElementById("v-"+x).classList.toggle("hide",x!==t);document.getElementById("n-"+x).classList.toggle("on",x===t);});
+  if(t==="resumen"){var d=document.getElementById("rdate");if(!d.value)d.value=today();fillFairSel();resumen();}
+  if(t==="cartones")cartones();if(t==="datos")datos();window.scrollTo(0,0);}
+function cardOf(it){if(!S.cardCats[it.c])return "";return it.c==="Aros"?"Aros (cartón general)":it.n;}
+function sell(it,price){var s={id:"s"+Date.now()+Math.random().toString(36).slice(2,5),t:Date.now(),fair:S.fair,k:it.k,n:it.n,c:it.c,s:it.s,price:price,pay:S.pay,card:cardOf(it)};
+  S.sales.push(s);lastSale=s.id;save();toast("Vendido: "+it.n+(it.s&&it.c==="Dijes"?" ("+it.s+")":"")+" · "+money(price));draw();}
+function deshacer(){if(!lastSale)return;S.sales=S.sales.filter(function(x){return x.id!==lastSale;});lastSale=null;save();hideToast();draw();}
+var tt=null;function toast(m,err){document.getElementById("toastTx").textContent=m;var t=document.getElementById("toast");t.classList.add("show");document.getElementById("toastBtn").style.display=err?"none":"";clearTimeout(tt);tt=setTimeout(hideToast,5000);}
+function hideToast(){document.getElementById("toast").classList.remove("show");}
+function otro(){var n=prompt("¿Qué vendiste?");if(!n)return;var p=parseFloat(String(prompt("Precio","")||"").replace(",","."));if(!p||p<0)return;
+  sell({k:"Otro|"+n+"|",n:n,c:"Otro",s:"",p:p},p);}
+function draw(){ensureFair();
+  document.getElementById("pay").innerHTML=PAYS.map(function(p){return '<button class="chip'+(S.pay===p?" on":"")+'" onclick="S.pay=\''+p+'\';save();draw()">'+p+'</button>';}).join("");
+  document.getElementById("cats").innerHTML=CATS.map(function(c){return '<button class="chip'+(c===cat?" on":"")+'" onclick="cat=\''+c+'\';size=\'Todos\';draw()">'+esc(lab(c))+'</button>';}).join("");
+  var q=norm(document.getElementById("q").value.trim());
+  var sizes=[];ITEMS.forEach(function(x){if(x.c===cat&&sizes.indexOf(x.s)<0)sizes.push(x.s);});
+  document.getElementById("sizes").innerHTML=(sizes.length>1&&!q)?["Todos"].concat(sizes).map(function(s){return '<button class="chip'+(s===size?" on":"")+'" onclick="size=\''+s.replace("'","")+'\';draw()">'+esc(s)+'</button>';}).join(""):"";
+  var td=today(),cnt={};S.sales.forEach(function(s){if(dayOf(s.t)===td&&s.fair===S.fair)cnt[s.k]=(cnt[s.k]||0)+1;});
+  var list=ITEMS.filter(function(x){if(q)return norm(x.n+" "+x.s+" "+lab(x.c)).indexOf(q)>-1;return x.c===cat&&(size==="Todos"||x.s===size);});
+  document.getElementById("grid").innerHTML=list.length?list.map(function(x){var i=ITEMS.indexOf(x);return '<button class="tile" onclick="sell(ITEMS['+i+'],ITEMS['+i+'].p)"><span class="sw" style="background:linear-gradient(135deg,'+x.g0+','+x.g1+')"></span><span class="tx"><b>'+esc(x.n)+'</b><small>'+esc(q?lab(x.c)+" · "+x.s:x.s)+'</small><span class="pr">'+money(x.p)+'</span></span>'+(cnt[x.k]?'<span class="bd">'+cnt[x.k]+'</span>':'')+'</button>';}).join(""):'<p class="muted">No hay piezas con ese filtro.</p>';
+}
+function fillFairSel(){var d=document.getElementById("rdate").value,sel=document.getElementById("rfair"),cur=sel.value;var ids={};S.sales.forEach(function(s){if(dayOf(s.t)===d)ids[s.fair]=1;});
+  var h='<option value="">Todas las ferias del día</option>';Object.keys(ids).forEach(function(id){var f=fairObj(id);h+='<option value="'+id+'">'+esc(f?f.name:"(sin nombre)")+'</option>';});sel.innerHTML=h;if(cur&&ids[cur])sel.value=cur;}
+function groupBy(arr,fn){var o={};arr.forEach(function(x){var k=fn(x);(o[k]=o[k]||[]).push(x);});return o;}
+function sumBy(o){return Object.keys(o).map(function(k){return {k:k,n:o[k].length,t:o[k].reduce(function(a,b){return a+b.price;},0)};}).sort(function(a,b){return b.t-a.t;});}
+function daySales(){var d=document.getElementById("rdate").value,f=document.getElementById("rfair").value;return S.sales.filter(function(s){return dayOf(s.t)===d&&(!f||s.fair===f);});}
+function resumen(){fillFairSel();var v=daySales(),tot=v.reduce(function(a,b){return a+b.price;},0),h="";
+  if(!v.length){document.getElementById("rbody").innerHTML='<p class="muted">No hay ventas ese día.</p>';return;}
+  h+='<div class="kpis"><div class="kpi"><b>'+money(tot)+'</b><span>Total vendido</span></div><div class="kpi"><b>'+v.length+'</b><span>Piezas</span></div><div class="kpi"><b>'+money(tot/v.length)+'</b><span>Promedio</span></div></div>';
+  h+='<div class="card"><h3>Por medio de pago</h3>'+sumBy(groupBy(v,function(s){return s.pay;})).map(function(r){return '<div class="row"><span>'+esc(r.k)+' · '+r.n+'</span><span class="r">'+money(r.t)+'</span></div>';}).join("")+'</div>';
+  h+='<div class="card"><h3>Por tipo de pieza</h3>'+sumBy(groupBy(v,function(s){return lab(s.c);})).map(function(r){return '<div class="row"><span>'+esc(r.k)+' · '+r.n+'</span><span class="r">'+money(r.t)+'</span></div>';}).join("")+'</div>';
+  h+='<div class="card"><h3>Lo que se vendió</h3>'+sumBy(groupBy(v,function(s){return s.n+(s.s?" · "+s.s:"");})).map(function(r){return '<div class="row"><span>'+esc(r.k)+'</span><span class="r">×'+r.n+' · '+money(r.t)+'</span></div>';}).join("")+'</div>';
+  var cg=groupBy(v.filter(function(s){return s.card;}),function(s){return s.card;});
+  h+='<div class="card"><h3>Cartones usados ese día</h3>'+(Object.keys(cg).length?Object.keys(cg).sort(function(a,b){return cg[b].length-cg[a].length;}).map(function(k){return '<div class="row"><span>'+esc(k)+'</span><span class="r">×'+cg[k].length+'</span></div>';}).join(""):'<p class="muted">Ninguno.</p>')+'</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button class="btn pri" onclick="copiarResumen()">Copiar resumen</button></div>';
+  h+='<div class="card"><h3>Ventas del día</h3>'+v.slice().sort(function(a,b){return b.t-a.t;}).map(function(s){var d=new Date(s.t);return '<div class="line"><span class="t">'+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)+' · '+esc(s.n)+(s.s?" · "+esc(s.s):"")+' · '+esc(s.pay)+'<br><b>'+money(s.price)+'</b></span><button onclick="editPrecio(\''+s.id+'\')">Precio</button><button class="bad" onclick="borrarVenta(\''+s.id+'\')">Borrar</button></div>';}).join("")+'</div>';
+  document.getElementById("rbody").innerHTML=h;}
+function editPrecio(id){var s=S.sales.filter(function(x){return x.id===id;})[0];if(!s)return;var p=parseFloat(String(prompt("Precio cobrado",s.price)||"").replace(",","."));if(p>=0){s.price=p;save();resumen();}}
+function borrarVenta(id){if(!confirm("¿Borrar esta venta?"))return;S.sales=S.sales.filter(function(x){return x.id!==id;});save();resumen();}
+function textoResumen(){var v=daySales(),d=document.getElementById("rdate").value,tot=v.reduce(function(a,b){return a+b.price;},0);
+  var f=document.getElementById("rfair").value,fn=f?(fairObj(f)||{}).name:"todas las ferias";
+  var t="Resumen "+d+" · "+fn+"\nTotal: "+money(tot)+" ("+v.length+" piezas)\n\nMedios de pago:\n"+sumBy(groupBy(v,function(s){return s.pay;})).map(function(r){return "- "+r.k+": "+money(r.t)+" ("+r.n+")";}).join("\n");
+  t+="\n\nVendido:\n"+sumBy(groupBy(v,function(s){return s.n+(s.s?" "+s.s:"");})).map(function(r){return "- "+r.k+" x"+r.n;}).join("\n");
+  var cg=groupBy(v.filter(function(s){return s.card;}),function(s){return s.card;});
+  t+="\n\nCartones usados:\n"+(Object.keys(cg).length?Object.keys(cg).map(function(k){return "- "+k+" x"+cg[k].length;}).join("\n"):"ninguno");return t;}
+function copiar(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast("Copiado",true);},function(){alert(t);});}else{alert(t);}}
+function copiarResumen(){copiar(textoResumen());}
+function pendientes(){var c={};S.sales.forEach(function(s){if(s.card)c[s.card]=(c[s.card]||0)+1;});var r=[];Object.keys(c).forEach(function(k){var p=c[k]-(S.printed[k]||0);if(p>0)r.push([k,p]);});return r.sort(function(a,b){return b[1]-a[1];});}
+function cartones(){var p=pendientes();document.getElementById("cartList").innerHTML=p.length?p.map(function(r){return '<div class="line"><span class="t"><b>'+esc(r[0])+'</b></span><span><b>×'+r[1]+'</b></span><button onclick="marcar(\''+esc(r[0]).replace(/'/g,"\\'")+'\')">Reimprimí</button></div>';}).join(""):'<p class="muted">No hay cartones pendientes. ¡Todo al día!</p>';}
+function marcar(k){var c=0;S.sales.forEach(function(s){if(s.card===k)c++;});S.printed[k]=c;save();cartones();}
+function marcarTodo(){if(!confirm("¿Marcar todos los cartones como reimpresos?"))return;var c={};S.sales.forEach(function(s){if(s.card)c[s.card]=(c[s.card]||0)+1;});S.printed=c;save();cartones();}
+function copiarCartones(){var p=pendientes();copiar(p.length?"Cartones a reimprimir:\n"+p.map(function(r){return "- "+r[0]+" x"+r[1];}).join("\n"):"No hay cartones pendientes.");}
+function datos(){document.getElementById("cardCats").innerHTML=DATA.cats.map(function(c){return '<label class="row" style="cursor:pointer"><span>'+esc(lab(c))+'</span><input type="checkbox" '+(S.cardCats[c]?"checked":"")+' onchange="S.cardCats[\''+c+'\']=this.checked;save()"></label>';}).join("");
+  document.getElementById("fairList").innerHTML=S.fairs.length?S.fairs.slice().reverse().map(function(f){var v=S.sales.filter(function(s){return s.fair===f.id;});return '<div class="row"><span>'+esc(f.name)+'<br><span class="muted">'+f.date+'</span></span><span class="r">'+v.length+' piezas<br>'+money(v.reduce(function(a,b){return a+b.price;},0))+'</span></div>';}).join(""):'<p class="muted">Todavía no hay ferias.</p>';}
+function bajar(nombre,txt,tipo){var b=new Blob([txt],{type:tipo}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=nombre;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);}
+function bajarCSV(){var rows=[["fecha","hora","feria","pieza","tamaño","tipo","precio","pago","cartón"]];S.sales.forEach(function(s){var d=new Date(s.t),f=fairObj(s.fair);rows.push([dayOf(s.t),("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2),f?f.name:"",s.n,s.s,lab(s.c),s.price,s.pay,s.card]);});
+  bajar("ventas-pietra.csv","\uFEFF"+rows.map(function(r){return r.map(function(x){return '"'+String(x).replace(/"/g,'""')+'"';}).join(";");}).join("\n"),"text/csv;charset=utf-8");}
+function bajarBackup(){bajar("copia-ferias-pietra-"+today()+".json",JSON.stringify(S),"application/json");}
+function restaurar(inp){var f=inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var o=JSON.parse(r.result);if(!o.sales)throw 0;if(!confirm("Esto reemplaza los datos actuales. ¿Seguir?"))return;S=o;save();location.reload();}catch(e){alert("El archivo no es una copia válida.");}};r.readAsText(f);}
+function borrarTodo(){if(confirm("¿Borrar TODAS las ventas y ferias de este celular?")&&confirm("Última confirmación: no se puede deshacer.")){try{localStorage.removeItem(KEY);}catch(e){}location.reload();}}
+load();draw();
+</script>
+</body>
+</html>
